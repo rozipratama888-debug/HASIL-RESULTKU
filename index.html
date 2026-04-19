@@ -30,7 +30,6 @@
             min-height: 100vh;
         }
 
-        /* === BACKGROUND: video + fallback gradient === */
         .video-bg {
             position: fixed;
             top: 0; left: 0;
@@ -52,7 +51,6 @@
         }
         .fallback-bg.active { opacity: 1; }
 
-        /* Subtle animated mesh on fallback */
         .fallback-bg::before {
             content: '';
             position: absolute;
@@ -284,6 +282,9 @@
             transition: color 0.25s;
             font-size: 0.7rem;
             margin-left: 0.3rem;
+            background: none;
+            border: none;
+            padding: 0.2rem;
         }
         .edit-shio-btn:hover { color: #FFD700; }
 
@@ -397,11 +398,14 @@
         .status-offline { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
         .status-loading { background: rgba(212,175,55,0.2); color: #FFD700; border: 1px solid rgba(212,175,55,0.3); }
 
-        .empty-hint {
-            color: rgba(255,255,255,0.2);
-            font-style: italic;
-            font-size: 0.75rem;
+        .result-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.25rem 0.5rem;
         }
+        .result-row + .result-row { margin-top: 0.875rem; }
 
         @media (max-width: 640px) {
             .result-num { font-size: 1.35rem !important; }
@@ -419,14 +423,11 @@
 </head>
 <body>
 
-    <!-- Video background (akan disembunyikan jika gagal) -->
     <video id="videoBg" class="video-bg" autoplay muted loop playsinline>
         <source src="https://i.imgur.com/XCxsBgy.mp4" type="video/mp4">
     </video>
 
-    <!-- Fallback gradient background (aktif jika video gagal) -->
     <div id="fallbackBg" class="fallback-bg"></div>
-
     <div class="overlay"></div>
 
     <main class="main-wrap">
@@ -439,30 +440,8 @@
             <div class="gold-line mb-5"></div>
             <p id="dDate" class="text-center text-sm mb-5" style="color:rgba(255,255,255,0.6);">-</p>
 
-            <div class="space-y-3.5">
-                <div class="flex items-center justify-between flex-wrap gap-y-1 gap-x-2">
-                    <span class="text-sm font-medium" style="color:rgba(255,255,255,0.7);">Result 1 :</span>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span id="dR1" class="result-num text-xl sm:text-2xl empty-val">-</span>
-                        <span class="text-sm" style="color:rgba(255,255,255,0.7);">, SHIO :</span>
-                        <span id="dShio" class="shio-badge">
-                            <i class="fa-solid fa-paw" style="font-size:0.65rem;"></i>
-                            <span>-</span>
-                        </span>
-                        <button class="edit-shio-btn" onclick="openShioModal()" title="Edit Tabel Shio">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium" style="color:rgba(255,255,255,0.7);">Result 2 :</span>
-                    <span id="dR2" class="result-num text-xl sm:text-2xl empty-val">-</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium" style="color:rgba(255,255,255,0.7);">Result 3 :</span>
-                    <span id="dR3" class="result-num text-xl sm:text-2xl empty-val">-</span>
-                </div>
-            </div>
+            <!-- Container hasil dinamis -->
+            <div id="resultContainer" class="space-y-0"></div>
 
             <div class="gold-line mt-6 mb-5"></div>
             <p class="shimmer-text text-center text-sm font-bold tracking-wide">Selamat Kepada Pemenang, Salam JP</p>
@@ -493,15 +472,15 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="field-label" for="iR1">Result 1</label>
-                        <input id="iR1" type="text" class="inp inp-mono" placeholder="1234" maxlength="4" oninput="numOnly(this); onDataChange()">
+                        <input id="iR1" type="text" class="inp inp-mono" placeholder="5456" oninput="numOnly(this); onDataChange()">
                     </div>
                     <div>
                         <label class="field-label" for="iR2">Result 2</label>
-                        <input id="iR2" type="text" class="inp inp-mono" placeholder="5841" maxlength="4" oninput="numOnly(this); onDataChange()">
+                        <input id="iR2" type="text" class="inp inp-mono" placeholder="5454" oninput="numOnly(this); onDataChange()">
                     </div>
                     <div>
                         <label class="field-label" for="iR3">Result 3</label>
-                        <input id="iR3" type="text" class="inp inp-mono" placeholder="4474" maxlength="4" oninput="numOnly(this); onDataChange()">
+                        <input id="iR3" type="text" class="inp inp-mono" placeholder="6565" oninput="numOnly(this); onDataChange()">
                     </div>
                 </div>
                 <div class="flex gap-2.5 pt-1.5">
@@ -568,15 +547,15 @@
     //  KONFIGURASI FIREBASE
     // =====================================================
     const firebaseConfig = {
-    apiKey: "AIzaSyDUz5JUyhW5CX38mleMv__POsSD5oOLnmg",
-    authDomain: "tabungan-saya.firebaseapp.com",
-    databaseURL: "https://tabungan-saya-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "tabungan-saya",
-    storageBucket: "tabungan-saya.firebasestorage.app",
-    messagingSenderId: "227780626177",
-    appId: "1:227780626177:web:1feac0108d1d086db73d00",
-    measurementId: "G-ZQGB7DMD9Y"
-  };
+        apiKey: "AIzaSyDUz5JUyhW5CX38mleMv__POsSD5oOLnmg",
+        authDomain: "tabungan-saya.firebaseapp.com",
+        databaseURL: "https://tabungan-saya-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "tabungan-saya",
+        storageBucket: "tabungan-saya.firebasestorage.app",
+        messagingSenderId: "227780626177",
+        appId: "1:227780626177:web:1feac0108d1d086db73d00",
+        measurementId: "G-ZQGB7DMD9Y"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
@@ -607,28 +586,23 @@
     let autoSaveTimer = null;
     let isOnline = navigator.onLine;
 
+    // Tracking nilai sebelumnya untuk animasi pulse
+    let prevValues = { r1: '', r2: '', r3: '' };
+
     const HARI  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
     // =====================================================
-    //  VIDEO FALLBACK — ganti ke gradient jika video gagal
+    //  VIDEO FALLBACK
     // =====================================================
     (function initVideo() {
-        const video = document.getElementById('videoBg');
-        const fallback = document.getElementById('fallbackBg');
+        var video = document.getElementById('videoBg');
+        var fallback = document.getElementById('fallbackBg');
+        var videoReady = false;
 
-        // Jika video error setelah 3 detik, switch ke fallback
-        let videoReady = false;
+        video.addEventListener('canplay', function() { videoReady = true; });
+        video.addEventListener('error', function() { switchToFallback(); });
 
-        video.addEventListener('canplay', function() {
-            videoReady = true;
-        });
-
-        video.addEventListener('error', function() {
-            switchToFallback();
-        });
-
-        // Timeout safety — jika video belum siap dalam 4 detik, pakai fallback
         setTimeout(function() {
             if (!videoReady) switchToFallback();
         }, 4000);
@@ -647,66 +621,136 @@
     // =====================================================
     function fmtTanggal(str) {
         if (!str) return '-';
-        const d = new Date(str + 'T00:00:00');
+        var d = new Date(str + 'T00:00:00');
         if (isNaN(d.getTime())) return '-';
         return 'Hari ' + HARI[d.getDay()] + ', ' + d.getDate() + ' ' + BULAN[d.getMonth()] + ' ' + d.getFullYear();
     }
 
     function cariShio(val) {
         if (!val) return '';
-        const n = parseInt(String(val).slice(-2), 10);
-        for (const [nama, arr] of Object.entries(shioData)) {
-            if (arr.includes(n)) return nama;
+        var n = parseInt(String(val).slice(-2), 10);
+        for (var nama in shioData) {
+            if (shioData[nama].includes(n)) return nama;
         }
         return '';
     }
 
     function numOnly(el) { el.value = el.value.replace(/[^0-9]/g, ''); }
 
-    let prevR1 = '', prevR2 = '', prevR3 = '';
+    // =====================================================
+    //  TAMPILAN HASIL — DINAMIS
+    // =====================================================
 
+    // Helper: buat elemen span label kiri
+    function makeLabel(text) {
+        var s = document.createElement('span');
+        s.className = 'text-sm font-medium';
+        s.style.color = 'rgba(255,255,255,0.7)';
+        s.textContent = text;
+        return s;
+    }
+
+    // Helper: buat elemen span angka result
+    function makeNumSpan(value, prevValue) {
+        var s = document.createElement('span');
+        s.className = 'result-num text-xl sm:text-2xl' + (value ? '' : ' empty-val');
+        s.textContent = value || '-';
+        if (value && value !== prevValue) {
+            s.classList.add('pulse');
+        }
+        return s;
+    }
+
+    // Helper: buat badge shio
+    function makeShioBadge(shioName) {
+        var s = document.createElement('span');
+        s.className = 'shio-badge';
+        s.innerHTML = '<i class="fa-solid fa-paw" style="font-size:0.65rem;"></i><span>' + (shioName || '-') + '</span>';
+        return s;
+    }
+
+    // Helper: buat tombol edit shio
+    function makeEditBtn() {
+        var b = document.createElement('button');
+        b.className = 'edit-shio-btn';
+        b.onclick = openShioModal;
+        b.title = 'Edit Tabel Shio';
+        b.innerHTML = '<i class="fa-solid fa-pen-to-square"></i>';
+        return b;
+    }
+
+    // Helper: buat baris result lengkap (dengan shio di sebelah kanan)
+    function buildResultRowWithShio(labelText, value, prevValue) {
+        var row = document.createElement('div');
+        row.className = 'result-row';
+
+        var left = makeLabel(labelText);
+        row.appendChild(left);
+
+        var right = document.createElement('div');
+        right.className = 'flex items-center gap-2 flex-wrap';
+        right.appendChild(makeNumSpan(value, prevValue));
+
+        if (value) {
+            var comma = document.createElement('span');
+            comma.className = 'text-sm';
+            comma.style.color = 'rgba(255,255,255,0.7)';
+            comma.textContent = ', SHIO :';
+            right.appendChild(comma);
+            right.appendChild(makeShioBadge(cariShio(value)));
+        }
+
+        right.appendChild(makeEditBtn());
+        row.appendChild(right);
+        return row;
+    }
+
+    // Helper: buat baris result sederhana (tanpa shio)
+    function buildResultRowSimple(labelText, value, prevValue) {
+        var row = document.createElement('div');
+        row.className = 'result-row';
+        row.appendChild(makeLabel(labelText));
+        row.appendChild(makeNumSpan(value, prevValue));
+        return row;
+    }
+
+    // =====================================================
+    //  UPDATE DISPLAY UTAMA
+    // =====================================================
     function updateDisplay() {
-        const r1 = currentData.r1 || '';
-        const r2 = currentData.r2 || '';
-        const r3 = currentData.r3 || '';
-        const shio = cariShio(r1);
+        var r1 = currentData.r1 || '';
+        var r2 = currentData.r2 || '';
+        var r3 = currentData.r3 || '';
 
         document.getElementById('dPasaran').textContent = currentData.pasaran || '-';
         document.getElementById('dDate').textContent = fmtTanggal(currentData.date);
 
-        const dR1 = document.getElementById('dR1');
-        const dR2 = document.getElementById('dR2');
-        const dR3 = document.getElementById('dR3');
+        var container = document.getElementById('resultContainer');
+        container.innerHTML = '';
 
-        dR1.textContent = r1 || '-';
-        dR2.textContent = r2 || '-';
-        dR3.textContent = r3 || '-';
+        // Hitung berapa result yang terisi
+        var filledCount = [r1, r2, r3].filter(function(v) { return v !== ''; }).length;
 
-        // Tambah/hapus class empty-val
-        dR1.classList.toggle('empty-val', !r1);
-        dR2.classList.toggle('empty-val', !r2);
-        dR3.classList.toggle('empty-val', !r3);
-
-        document.getElementById('dShio').innerHTML =
-            '<i class="fa-solid fa-paw" style="font-size:0.65rem;"></i><span>' + (shio || '-') + '</span>';
-
-        pulseIfChanged('dR1', r1, prevR1);
-        pulseIfChanged('dR2', r2, prevR2);
-        pulseIfChanged('dR3', r3, prevR3);
-        prevR1 = r1; prevR2 = r2; prevR3 = r3;
-    }
-
-    function pulseIfChanged(id, curr, prev) {
-        if (curr && curr !== prev) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('pulse');
-                void el.offsetWidth;
-                el.classList.add('pulse');
-            }
+        if (filledCount <= 1) {
+            // Mode 1 result: tampil "Result : xxx, SHIO : xxx"
+            var val = r1 || r2 || r3 || '';
+            container.appendChild(buildResultRowWithShio('Result :', val, prevValues.r1 || prevValues.r2 || prevValues.r3));
+        } else {
+            // Mode multi result: tampil "Result 1 :", "Result 2 :", "Result 3 :"
+            container.appendChild(buildResultRowWithShio('Result 1 :', r1, prevValues.r1));
+            container.appendChild(buildResultRowSimple('Result 2 :', r2, prevValues.r2));
+            container.appendChild(buildResultRowSimple('Result 3 :', r3, prevValues.r3));
         }
+
+        // Simpan nilai sekarang sebagai prev untuk next update
+        prevValues.r1 = r1;
+        prevValues.r2 = r2;
+        prevValues.r3 = r3;
     }
 
+    // =====================================================
+    //  SYNC INPUT ↔ DATA
+    // =====================================================
     function syncInputsToData() {
         currentData.pasaran = document.getElementById('iPasaran').value;
         currentData.date = document.getElementById('iDate').value;
@@ -756,11 +800,9 @@
     async function loadFromFirebase() {
         updateConnectionStatus('loading');
         try {
-            // Load data utama
             var snapshot = await dbRef.once('value');
             if (snapshot.exists()) {
                 var raw = snapshot.val();
-                // Pastikan semua field ada
                 currentData = {
                     pasaran: raw.pasaran || '',
                     date: raw.date || '',
@@ -772,29 +814,23 @@
                 updateConnectionStatus('online');
                 showToast('Data berhasil dimuat dari server');
             } else {
-                // Firebase kosong — isi dengan data contoh agar tampilan tidak kosong
                 var today = new Date();
                 var dateStr = today.getFullYear() + '-' +
                     String(today.getMonth()+1).padStart(2,'0') + '-' +
                     String(today.getDate()).padStart(2,'0');
-
                 currentData = {
                     pasaran: 'BANGKOK 0130',
                     date: dateStr,
-                    r1: '1234',
-                    r2: '5841',
-                    r3: '4474'
+                    r1: '5456',
+                    r2: '5454',
+                    r3: '6565'
                 };
                 syncDataToInputs();
-
-                // Simpan data contoh ke Firebase untuk pertama kali
                 await dbRef.set(currentData);
-
                 updateConnectionStatus('online');
                 showToast('Data contoh ditampilkan — silakan edit sesuai kebutuhan');
             }
 
-            // Load data shio
             var shioSnapshot = await shioRef.once('value');
             if (shioSnapshot.exists()) {
                 shioData = shioSnapshot.val();
@@ -806,8 +842,6 @@
 
         } catch (error) {
             console.error('Error loading data:', error);
-
-            // Gagal load — tampilkan data contoh dari localStorage atau default
             var cached = localStorage.getItem('cachedData');
             if (cached) {
                 currentData = JSON.parse(cached);
@@ -820,9 +854,9 @@
                 currentData = {
                     pasaran: 'BANGKOK 0130',
                     date: dateStr,
-                    r1: '1234',
-                    r2: '5841',
-                    r3: '4474'
+                    r1: '5456',
+                    r2: '5454',
+                    r3: '6565'
                 };
                 showToast('Gagal terhubung — menampilkan data contoh');
             }
@@ -846,35 +880,28 @@
         try {
             await dbRef.set(currentData);
             await shioRef.set(shioData);
-
-            // Cache ke localStorage
             localStorage.setItem('cachedData', JSON.stringify(currentData));
             localStorage.removeItem('pendingData');
             localStorage.removeItem('pendingShio');
-
             showToast('Data berhasil disimpan ke cloud!');
             saveBtnText.innerHTML = '<i class="fa-regular fa-circle-check"></i> Tersimpan';
             updateConnectionStatus('online');
-
             setTimeout(function() {
                 saveBtnText.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
                 saveBtn.disabled = false;
             }, 2000);
-
         } catch (error) {
             console.error('Error saving:', error);
             localStorage.setItem('pendingData', JSON.stringify(currentData));
             localStorage.setItem('cachedData', JSON.stringify(currentData));
             showToast('Gagal simpan ke server — data disimpan lokal');
             updateConnectionStatus('offline');
-
             saveBtnText.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan';
             saveBtn.disabled = false;
         }
         isSaving = false;
     }
 
-    // Sync pending saat online
     async function syncPendingData() {
         var pending = localStorage.getItem('pendingData');
         if (pending) {
@@ -936,16 +963,30 @@
     }
 
     // =====================================================
-    //  UI LAINNYA
+    //  SALIN HASIL — teks menyesuaikan mode tampilan
     // =====================================================
     function generateText() {
-        var shio = cariShio(currentData.r1);
-        return 'Hasil Pengeluaran ' + (currentData.pasaran || '-') + '\n' +
-            fmtTanggal(currentData.date) + '\n' +
-            'Result 1 : ' + (currentData.r1 || '-') + ', SHIO : ' + (shio || '-') + '\n' +
-            'Result 2 : ' + (currentData.r2 || '-') + '\n' +
-            'Result 3 : ' + (currentData.r3 || '-') + '\n' +
-            'Selamat Kepada Pemenang, Salam JP';
+        var r1 = currentData.r1 || '';
+        var r2 = currentData.r2 || '';
+        var r3 = currentData.r3 || '';
+        var filledCount = [r1, r2, r3].filter(function(v) { return v !== ''; }).length;
+
+        var text = 'Hasil Pengeluaran ' + (currentData.pasaran || '-') + '\n' +
+            fmtTanggal(currentData.date) + '\n';
+
+        if (filledCount <= 1) {
+            var val = r1 || r2 || r3 || '-';
+            var shio = cariShio(val);
+            text += 'Result : ' + val + ', SHIO : ' + (shio || '-') + '\n';
+        } else {
+            var shio = cariShio(r1);
+            text += 'Result 1 : ' + (r1 || '-') + ', SHIO : ' + (shio || '-') + '\n';
+            text += 'Result 2 : ' + (r2 || '-') + '\n';
+            text += 'Result 3 : ' + (r3 || '-') + '\n';
+        }
+
+        text += 'Selamat Kepada Pemenang, Salam JP';
+        return text;
     }
 
     async function copyResult() {
